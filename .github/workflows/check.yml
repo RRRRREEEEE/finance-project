@@ -1,0 +1,22 @@
+name: 文档检查
+
+on:
+  push:
+    paths:
+      - "**.md"
+      - "check_vault.py"
+  workflow_dispatch:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 文档完整性
+        run: |
+          echo "检查必读文件..."
+          for f in CLAUDE.md AI协作指令_v2.md 笔记制作SOP.md 笔记检查清单.md 变更日志.md; do
+            [ -f "$f" ] && echo "  ✅ $f" || echo "::error ::缺失: $f"
+          done
+      - name: Python 语法
+        run: python -c "compile(open('check_vault.py').read(), 'check_vault.py', 'exec'); print('  ✅ syntax ok')"
