@@ -12,6 +12,14 @@
 6. 🚫 **不标注考试重点** — 人类自己写
 7. 🚫 **笔记不进 Inbox** — 直接放课程章节文件夹
 
+## Git 版本管理
+
+- 非平凡改动（合并文档/重构规则/批量修改笔记）→ 先 `git checkout -b feature/xxx`
+- 搞砸了 → `git checkout master` 回滚，删分支
+- 做对了 → merge 回 master + push
+- 每门课完成 → `git tag v1.0-{课程名}`
+- 用户说"回到上一步" → 优先用 git 回滚，不是手动重做
+
 ## 每次必须
 
 - 建笔记前 Grep/Glob 搜全 Vault 去重
