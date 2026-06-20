@@ -280,6 +280,39 @@ def check_alias_conflicts(frontmatters) -> list:
     return issues
 
 
+def check_graduation_standards(all_md_files) -> list:
+    """检查 8: 课程毕业标准 — 内容质量底线"""
+    issues = []
+    for rel, text in all_md_files:
+        # 跳过非笔记文件（索引、考题、知识串讲）
+        name = Path(rel).stem
+        if any(kw in name for kw in ["知识串讲", "学习笔记", "概述", "术语索引", "总索引"]):
+            continue
+
+        # 1. 定义节有内容
+        def_match = re.search(r"## 📌 定义\s*\n(.*?)(?=\n## |\n---|\Z)", text, re.DOTALL)
+        if not def_match:
+            issues.append({"file": str(rel), "issue": "缺少 📌 定义节", "severity": "warning"})
+        elif len(def_match.group(1).strip()) < 10:
+            issues.append({"file": str(rel), "issue": "📌 定义节内容过短 (<10字)", "severity": "warning"})
+
+        # 2. 来源原文节有内容
+        src_match = re.search(r"## 📄 来源原文\s*\n(.*?)(?=\n## |\n---|\Z)", text, re.DOTALL)
+        if not src_match:
+            issues.append({"file": str(rel), "issue": "缺少 📄 来源原文节", "severity": "warning"})
+        elif len(src_match.group(1).strip()) < 5:
+            issues.append({"file": str(rel), "issue": "📄 来源原文节为空", "severity": "warning"})
+
+        # 3. 至少 1 个 wiki 链接（壳笔记 importance * 或 ** 忽略）
+        fm, _, _ = parse_frontmatter(text)
+        imp = fm.get("importance", "***") if fm else "***"
+        if not re.search(r"\[\[[^\]]+\]\]", text):
+            if imp not in ('"*"', '"**"', "*", "**"):
+                issues.append({"file": str(rel), "issue": "无任何 [[wiki链接]]（非壳笔记应有至少 1 个链接）", "severity": "warning"})
+
+    return issues
+
+
 def check_image_naming(image_files) -> list:
     """检查 7: 图片命名是否合规（检测 hash 命名）"""
     issues = []
@@ -313,6 +346,7 @@ def run_checks(course_filter=None):
     all_issues.extend(check_frontmatter_fields(all_md_files))
     all_issues.extend(check_alias_conflicts(frontmatters))
     all_issues.extend(check_image_naming(image_files))
+    all_issues.extend(check_graduation_standards(all_md_files))
 
     return all_issues, len(all_md_files), len(image_files)
 
